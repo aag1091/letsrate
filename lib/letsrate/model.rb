@@ -5,7 +5,7 @@ module Letsrate
   def rate(stars, user, dimension=nil, dirichlet_method=false)
     dimension = nil if dimension.blank?
 
-    if can_rate? user, dimension
+    if user_rate(user, dimension).nil?
       rates(dimension).create! do |r|
         r.stars = stars
         r.rater = user
@@ -16,8 +16,11 @@ module Letsrate
         update_rate_average(stars, dimension)
       end
     else
-      raise "User has already rated."
+      r = user_rate(user, dimension)
+      r.stars = stars
+      r.save!(validate: false)
     end
+    update_rate_average(stars, dimension)
   end
 
   def update_rate_average_dirichlet(stars, dimension=nil)
@@ -63,6 +66,10 @@ module Letsrate
 
   def average(dimension=nil)
     dimension ?  self.send("#{dimension}_average") : rate_average_without_dimension
+  end
+
+  def user_rate(user, dimension=nil)
+    user.ratings_given.where(dimension: dimension, rateable_id: id, rateable_type: self.class.name).first
   end
 
   def can_rate?(user, dimension=nil)
