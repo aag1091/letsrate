@@ -2,13 +2,19 @@ require 'active_support/concern'
 module Letsrate
   extend ActiveSupport::Concern
 
-  def rate(stars, user, dimension=nil, dirichlet_method=false)
+  def rate(stars, user, dimension=nil, dirichlet_method=false, ip=nil)
     dimension = nil if dimension.blank?
 
-    if user_rate(user, dimension).nil?
-      rates(dimension).create! do |r|
+    if user
+      if user_rate(user, dimension).nil?
+        rates(dimension).create! do |r|
+          r.stars = stars
+          r.rater = user
+        end
+      else
+        r = user_rate(user, dimension)
         r.stars = stars
-        r.rater = user
+        r.save!(validate: false)
       end
       if dirichlet_method
         update_rate_average_dirichlet(stars, dimension)
@@ -16,9 +22,10 @@ module Letsrate
         update_rate_average(stars, dimension)
       end
     else
-      r = user_rate(user, dimension)
-      r.stars = stars
-      r.save!(validate: false)
+      rates(dimension).create! do |r|
+        r.stars = stars
+        r.ip = ip
+      end
     end
     update_rate_average(stars, dimension)
   end
