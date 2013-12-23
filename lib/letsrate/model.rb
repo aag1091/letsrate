@@ -94,7 +94,7 @@ module Letsrate
   module ClassMethods
 
     def letsrate_rater
-      has_many :ratings_given, :class_name => "Rate", :foreign_key => :rater_id
+      has_many :ratings_given, :class_name => "Rate", :foreign_key => :rater_id, dependent: :destroy
     end
 
     def letsrate_rateable(*dimensions)
